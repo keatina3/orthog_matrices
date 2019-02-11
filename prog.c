@@ -25,16 +25,22 @@ int main(int argc, char *argv[]){
 	printf("Matrix A:\n");
 	print_mat(A);
 	
-	gs(A,Q,R);
+	//gs(A,Q,R);
+	//printf("Matrix Q:\n");
+	//print_mat(Q);
+	//printf("Matrix R:\n");
+	//print_mat(R);
+
+    hhorth(A,Q,R);
 	printf("Matrix Q:\n");
 	print_mat(Q);
 	printf("Matrix R:\n");
 	print_mat(R);
-
-	QR = mat_mul(Q,R);
+    
+    QR = mat_mul(Q,R);
 	printf("Matrix QR:\n");
 	print_mat(QR);
-
+    
 	// mat_diff //
 	free_mat(A);
 	free_mat(Q);

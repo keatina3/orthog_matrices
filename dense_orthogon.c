@@ -37,14 +37,25 @@ void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 	int n = A->I, m = A->J;
 	double *w = (double*)calloc(n,sizeof(double));
 	double *z = (double*)calloc(n,sizeof(double));
+    double *wv = (double*)calloc(n,sizeof(double));
+    double v;
 
 	for(i=0;i<m;i++){
-		if(i > 0){
-		
+		for(j=0;j<n;j++)
+            R->col_ptr[i][j] = A->col_ptr[i][j];
+        if(i > 0){
+            vec_vec_add(R->col_ptr[i], R->col_ptr[i], wv, n, 1);
 		}
-		get_z(z, A->col_ptrs[i], i, n);
+		get_z(z, R->col_ptr[i], i, n);
 		vec_scal_prod(w, z, norm_2(z, n), n, 1);
-	}
+        v = 2.0*inner_prod(R->col_ptr[i], w, n);
+        vec_scal_prod(w, w, v, n, 0);
+        vec_vec_add(R->col_ptr[i], R->col_ptr[i], w, n, 1);
+        vec_vec_add(wv, wv, w, n, 0);
+    }
+    free(w);
+    free(z);
+    free(wv);
 }
 
 void get_z(double *z, double *x,  int k, int n){
@@ -67,10 +78,7 @@ void get_z(double *z, double *x,  int k, int n){
 }
 
 int sign(double x){
-	if(x < 0.0)
-		return -1;
-	else
-		return 1;
+    return x >= 0 ? 1 : -1;
 }
 
 void vec_scal_prod(double *xhat, double *x, double y, int n, int div){
@@ -110,12 +118,6 @@ double inner_prod(double *x, double *y, int n){
 	
 	return prod;
 }
-
-/*
-void outer_prod(double *x, double *y, DenseMatrix XY, int n){
-	
-}
-*/
 
 double fwd_err(DenseMatrix *A){
 	int i,j;

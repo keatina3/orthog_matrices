@@ -6,7 +6,6 @@
 void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R);
 void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R);
 void get_z(double *z, double *x, int k, int n);
-int sign(double x);
 void vec_scal_prod(double *x, double *xhat, double y, int n, int div);
 void vec_vec_add(double *x, double *xhat, double *y, int n, int sub);
 double norm_2(double *x, int n);

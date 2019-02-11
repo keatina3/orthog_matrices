@@ -35,24 +35,39 @@ void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 	int i,j;
 	int n = A->I, m = A->J;
-	double *w = (double*)calloc(n,sizeof(double));
+    double *w_vals = (double*)calloc(n*m,sizeof(double));
+	double **w = (double**)malloc(n*sizeof(double*));
 	double *z = (double*)calloc(n,sizeof(double));
     double *wv = (double*)calloc(n,sizeof(double));
     double v;
 
-	for(i=0;i<m;i++){
-		for(j=0;j<n;j++)
-            R->col_ptr[i][j] = A->col_ptr[i][j];
-        if(i > 0){
-            vec_vec_add(R->col_ptr[i], R->col_ptr[i], wv, n, 1);
-		}
-		get_z(z, R->col_ptr[i], i, n);
-		vec_scal_prod(w, z, norm_2(z, n), n, 1);
-        v = 2.0*inner_prod(R->col_ptr[i], w, n);
-        vec_scal_prod(w, w, v, n, 0);
-        vec_vec_add(R->col_ptr[i], R->col_ptr[i], w, n, 1);
-        vec_vec_add(wv, wv, w, n, 0);
+    for(j=0;j<m;j++){
+        w[j] = &w_vals[j*n];
     }
+
+	for(j=0;j<m;j++){
+		for(i=0;i<n;i++)
+            R->col_ptr[j][i] = A->col_ptr[j][i];
+        if(j > 0){
+            for(i=0;i<j;i++){
+                v = 2.0*inner_prod(R->col_ptr[j], w[i], n);
+                vec_scal_prod(wv, w[i], v, n, 0); 
+                vec_vec_add(R->col_ptr[j], R->col_ptr[j], wv, n, 1);
+            }
+		}
+		get_z(z, R->col_ptr[j], j, n);
+		vec_scal_prod(w[j], z, norm_2(z, n), n, 1);
+        v = 2.0*inner_prod(R->col_ptr[j], w[j], n);
+        vec_scal_prod(wv, w[j], v, n, 0);
+        vec_vec_add(R->col_ptr[j], R->col_ptr[j], wv, n, 1);
+        Q->col_ptr[j][j] = 1.0;
+        for(i=j;i>=0;i--){
+            v = 2.0*inner_prod(Q->col_ptr[j], w[i], n);
+            vec_scal_prod(wv, w[i], v, n, 0); 
+            vec_vec_add(Q->col_ptr[j], Q->col_ptr[j], wv, n, 1);
+        }
+    }
+    free(w_vals);
     free(w);
     free(z);
     free(wv);
@@ -69,16 +84,12 @@ void get_z(double *z, double *x,  int k, int n){
 			for(j=k;j<n;j++){
 				tmp += x[j]*x[j];
 			}
-			beta = sign(x[k]) * sqrt(tmp);
+            beta = x[k] > 0.0 ? sqrt(tmp) : -sqrt(tmp);
 			z[i] = beta + x[i];
 		} else {
 			z[i] = x[i];
 		}
 	}
-}
-
-int sign(double x){
-    return x >= 0 ? 1 : -1;
 }
 
 void vec_scal_prod(double *xhat, double *x, double y, int n, int div){

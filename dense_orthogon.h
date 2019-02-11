@@ -12,5 +12,6 @@ double norm_2(double *x, int n);
 double inner_prod(double *x, double *y, int n);
 double fwd_err(DenseMatrix* A);
 DenseMatrix *mat_mul(DenseMatrix *A, DenseMatrix *B);
+DenseMatrix *mat_mat_add(DenseMatrix *A, DenseMatrix *B, int sub);
 
 #endif

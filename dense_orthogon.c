@@ -10,8 +10,6 @@ void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 	double *tmp_sum = (double*)calloc(n,sizeof(double));
 
 	R->col_ptr[0][0] = norm_2(A->col_ptr[0], n);
-	if(R->col_ptr[0][0] < ERR)
-		return;
 	vec_scal_prod(Q->col_ptr[0], A->col_ptr[0], R->col_ptr[0][0], n, 1);
 
 	for(j=1;j<m;j++){
@@ -23,8 +21,6 @@ void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 			vec_vec_add(qhat, qhat, tmp_sum, n, 1);
 		}
 		R->col_ptr[j][j] = norm_2(qhat,n);
-		if(R->col_ptr[j][j] < ERR)
-			return;
 		vec_scal_prod(Q->col_ptr[j], qhat, R->col_ptr[j][j], n, 1);
 	}
 
@@ -56,7 +52,7 @@ void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
             }
 		}
 		get_z(z, R->col_ptr[j], j, n);
-		vec_scal_prod(w[j], z, norm_2(z, n), n, 1);
+        vec_scal_prod(w[j], z, norm_2(z, n), n, 1);
         v = 2.0*inner_prod(R->col_ptr[j], w[j], n);
         vec_scal_prod(wv, w[j], v, n, 0);
         vec_vec_add(R->col_ptr[j], R->col_ptr[j], wv, n, 1);
@@ -94,11 +90,14 @@ void get_z(double *z, double *x,  int k, int n){
 
 void vec_scal_prod(double *xhat, double *x, double y, int n, int div){
 	int i;
-	for(i=0;i<n;i++)
+    if(fabs(y) < ERR)
+        return;
+	for(i=0;i<n;i++){
 		if(div)
 			xhat[i] = x[i]/y;
 		else
 			xhat[i] = x[i]*y;
+    }
 }
 
 void vec_vec_add(double *xhat, double *x, double *y, int n, int sub){
@@ -155,8 +154,17 @@ DenseMatrix *mat_mul(DenseMatrix *A, DenseMatrix *B){
 	return AB;
 }
 
-/*
-DenseMatrix *mat_mat_diff(DenseMatrix *A, DenseMatrix *B){
 
+DenseMatrix *mat_mat_add(DenseMatrix *A, DenseMatrix *B, int sub){
+    int j;
+    DenseMatrix *A_B;
+    if(A->J != B->J || A->I != B->I)
+        return NULL;
+
+    A_B = gen_mat(A->I, A->J, 0);
+
+    for(j=0;j<A_B->J;j++)
+        vec_vec_add(A_B->col_ptr[j], A->col_ptr[j], B->col_ptr[j], A_B->J, sub);
+        
+    return A_B; 
 }
-*/

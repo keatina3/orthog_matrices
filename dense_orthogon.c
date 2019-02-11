@@ -5,7 +5,7 @@
 
 void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 	int i,j;
-	int n = A->I, r = A->J;
+	int n = A->I, m = A->J;
 	double *qhat = (double*)calloc(n,sizeof(double));
 	double *tmp_sum = (double*)calloc(n,sizeof(double));
 
@@ -14,11 +14,11 @@ void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 		return;
 	vec_scal_prod(Q->col_ptr[0], A->col_ptr[0], R->col_ptr[0][0], n, 1);
 
-	for(j=1;j<r;j++){
+	for(j=1;j<m;j++){
 		for(i=0;i<n;i++)
 			qhat[i] = A->col_ptr[j][i];
 		for(i=0;i<j;i++){
-			R->col_ptr[j][i] = inner_prod(A->col_ptr[j], Q->col_ptr[i], n);
+			R->col_ptr[j][i] = inner_prod(qhat, Q->col_ptr[i], n);
 			vec_scal_prod(tmp_sum, Q->col_ptr[i], R->col_ptr[j][i], n, 0);
 			vec_vec_add(qhat, qhat, tmp_sum, n, 1);
 		}
@@ -33,7 +33,44 @@ void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 }
 
 void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
+	int i,j;
+	int n = A->I, m = A->J;
+	double *w = (double*)calloc(n,sizeof(double));
+	double *z = (double*)calloc(n,sizeof(double));
 
+	for(i=0;i<m;i++){
+		if(i > 0){
+		
+		}
+		get_z(z, A->col_ptrs[i], i, n);
+		vec_scal_prod(w, z, norm_2(z, n), n, 1);
+	}
+}
+
+void get_z(double *z, double *x,  int k, int n){
+	int i,j;
+	double beta, tmp = 0.0;
+
+	for(i=0;i<n;i++){
+		if(i<k){
+			z[i] = 0;
+		} else if(i==k){
+			for(j=k;j<n;j++){
+				tmp += x[j]*x[j];
+			}
+			beta = sign(x[k]) * sqrt(tmp);
+			z[i] = beta + x[i];
+		} else {
+			z[i] = x[i];
+		}
+	}
+}
+
+int sign(double x){
+	if(x < 0.0)
+		return -1;
+	else
+		return 1;
 }
 
 void vec_scal_prod(double *xhat, double *x, double y, int n, int div){
@@ -74,6 +111,21 @@ double inner_prod(double *x, double *y, int n){
 	return prod;
 }
 
+/*
+void outer_prod(double *x, double *y, DenseMatrix XY, int n){
+	
+}
+*/
+
+double fwd_err(DenseMatrix *A){
+	int i,j;
+	double fwd_err = 0.0;
+	for(j=0;j<A->J;j++)
+		for(i=0;i<A->I;i++)
+			fwd_err = A->col_ptr[j][i] > fwd_err ? A->col_ptr[j][i] : fwd_err;
+	return fwd_err;
+}
+
 DenseMatrix *mat_mul(DenseMatrix *A, DenseMatrix *B){
 	int i,j,k;
 	DenseMatrix *AB;
@@ -89,3 +141,9 @@ DenseMatrix *mat_mul(DenseMatrix *A, DenseMatrix *B){
 
 	return AB;
 }
+
+/*
+DenseMatrix *mat_mat_diff(DenseMatrix *A, DenseMatrix *B){
+
+}
+*/

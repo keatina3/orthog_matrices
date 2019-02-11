@@ -34,7 +34,8 @@ int main(int argc, char *argv[]){
 	QR = mat_mul(Q,R);
 	printf("Matrix QR:\n");
 	print_mat(QR);
-	
+
+	// mat_diff //
 	free_mat(A);
 	free_mat(Q);
 	free_mat(R);

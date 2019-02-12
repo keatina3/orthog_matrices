@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include "utils.h"
 
+// function to allocate and assign vals to new dense matrix //
+// defaults to 0.0 if rand = FALSE //
 DenseMatrix gen_mat(int I, int J, int rand){
 	DenseMatrix A;
 	
@@ -18,24 +20,27 @@ DenseMatrix gen_mat(int I, int J, int rand){
 	return A;
 }
 
+// assigns random vals to matrix A //
 void assign_rand(DenseMatrix *A){
 	int i;
 	for(i=0;i<A->I*A->J;i++)
 		A->vals[i] = drand48();
 }
 
+// initialises pointers in 2d array in col major format //
 void init_mat(DenseMatrix *A){
 	int j;
 	for(j=0;j<A->J;j++)
 		A->col_ptr[j] = &A->vals[(A->I)*j];
 }
 
+// free allocated memory of dense matrix //
 void free_mat(DenseMatrix *A){
 	free(A->vals);
 	free(A->col_ptr);
-	//free(A);
 }
 
+// printing matrix //
 void print_mat(DenseMatrix *A){
 	int i,j;
 	for(i=0;i<A->I;i++){

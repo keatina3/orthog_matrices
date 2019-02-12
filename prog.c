@@ -10,7 +10,8 @@ int main(int argc, char *argv[]){
 	double fwd_err1, fwd_err2, fwd_err3, fwd_err4;
 	DenseMatrix A, Q, R, QR, A_QR, Qt, QtQ, I, I_QtQ;
 	srand48(time(NULL));
-
+	
+	// allocating memory for matrices //
 	A = gen_mat(row,vecs,1);
 	Q = gen_mat(row,vecs,0);
 	R = gen_mat(vecs,vecs,0);
@@ -21,10 +22,14 @@ int main(int argc, char *argv[]){
 	QtQ = gen_mat(vecs,vecs,0);
 	I_QtQ = gen_mat(vecs,vecs,0);
 	
+	// setting I as identity //
 	for(i=0;i<vecs;i++)
 		I.col_ptr[i][i] = 1.0;
+	
 	printf("GS: A-QR\tGS: I-QtQ\tHH: A-QR\tHH: I-QtQ\n");
 	for(i=0;i<10;i++){
+
+		/////// TESTING GRAM_SCHMIDT ////////
 		gs(&A, &Q, &R);
     	mat_mul(&QR, &Q, &R);
    		mat_mat_add(&A_QR, &A, &QR, 1);
@@ -34,7 +39,9 @@ int main(int argc, char *argv[]){
 		mat_mul(&QtQ, &Qt, &Q);
 		mat_mat_add(&I_QtQ, &I, &QtQ, 1);
 		fwd_err2 = fwd_err(&I_QtQ);
+		/////////////////////////////////////
 
+		// setting matrix vals back to 0.0 //
 		for(j=0;j<vecs;j++){
 			for(k=0;k<vecs;k++){
 				R.col_ptr[j][k] = 0.0;
@@ -50,7 +57,9 @@ int main(int argc, char *argv[]){
 				QR.col_ptr[j][k] = 0.0;
 			}
 		}
+		////////////////////////////////////
 		
+		/// TESTING HOUSEHOLDER PROJECTOR //
 		hhorth(&A, &Q, &R);
     	mat_mul(&QR, &Q, &R);
    		mat_mat_add(&A_QR, &A, &QR, 1);
@@ -60,26 +69,13 @@ int main(int argc, char *argv[]){
 		mat_mul(&QtQ, &Qt, &Q);
 		mat_mat_add(&I_QtQ, &I, &QtQ, 1);
 		fwd_err4 = fwd_err(&I_QtQ);
-		
-		if(row <= 10 && vecs <= 10){
-			printf("Matrix A\n");
-			print_mat(&A);
-			printf("Matrix Q\n");
-			print_mat(&Q);
-			printf("Matrix R\n");
-			print_mat(&R);
-			printf("Matrix QR\n");
-			print_mat(&QR);
-			printf("Matrix I\n");
-			print_mat(&I);
-			printf("Matrix QtQ\n");
-			print_mat(&QtQ);
-		} else { 
+		////////////////////////////////////
+
 		printf("%0.15lf\t%0.15lf\t%0.15lf\t%0.15lf\n",fwd_err1,fwd_err2,fwd_err3,fwd_err4);
-		}
 		assign_rand(&A);
     }
-
+	
+	// freeing up all matrices //
 	free_mat(&A);
 	free_mat(&Q);
 	free_mat(&R);

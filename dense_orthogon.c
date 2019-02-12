@@ -31,31 +31,33 @@ void gs(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
 	int i,j;
 	int n = A->I, m = A->J;
-    double *w_vals = (double*)calloc(n*m,sizeof(double));
+	double *w_vals = (double*)calloc(n*m,sizeof(double));
 	double **w = (double**)malloc(n*sizeof(double*));
 	double *z = (double*)calloc(n,sizeof(double));
-    double *wv = (double*)calloc(n,sizeof(double));
-    double v;
-
-    for(j=0;j<m;j++){
-        w[j] = &w_vals[j*n];
-    }
+	double *wv = (double*)calloc(n,sizeof(double));
+	double v;
+	double *tmp = (double*)calloc(n,sizeof(double));
 
 	for(j=0;j<m;j++){
+    	w[j] = &w_vals[j*n];
+	}
+	for(j=0;j<m;j++){
 		for(i=0;i<n;i++)
-            R->col_ptr[j][i] = A->col_ptr[j][i];
+			tmp[i] = A->col_ptr[j][i];
         if(j > 0){
             for(i=0;i<j;i++){
-                v = 2.0*inner_prod(R->col_ptr[j], w[i], n);
+                v = 2.0*inner_prod(tmp, w[i], n);
                 vec_scal_prod(wv, w[i], v, n, 0); 
-                vec_vec_add(R->col_ptr[j], R->col_ptr[j], wv, n, 1);
+                vec_vec_add(tmp, tmp, wv, n, 1);
             }
 		}
-		get_z(z, R->col_ptr[j], j, n);
+		get_z(z, tmp, j, n);
         vec_scal_prod(w[j], z, norm_2(z, n), n, 1);
-        v = 2.0*inner_prod(R->col_ptr[j], w[j], n);
+        v = 2.0*inner_prod(tmp, w[j], n);
         vec_scal_prod(wv, w[j], v, n, 0);
-        vec_vec_add(R->col_ptr[j], R->col_ptr[j], wv, n, 1);
+        vec_vec_add(tmp, tmp, wv, n, 1);
+		for(i=0;i<=j;i++)
+			R->col_ptr[j][i] = tmp[i];
         Q->col_ptr[j][j] = 1.0;
         for(i=j;i>=0;i--){
             v = 2.0*inner_prod(Q->col_ptr[j], w[i], n);
@@ -63,6 +65,7 @@ void hhorth(DenseMatrix *A, DenseMatrix *Q, DenseMatrix *R){
             vec_vec_add(Q->col_ptr[j], Q->col_ptr[j], wv, n, 1);
         }
     }
+	free(tmp);
     free(w_vals);
     free(w);
     free(z);
@@ -91,13 +94,14 @@ void get_z(double *z, double *x,  int k, int n){
 void vec_scal_prod(double *xhat, double *x, double y, int n, int div){
 	int i;
     if(fabs(y) < ERR)
-        return;
+		return;
+	
 	for(i=0;i<n;i++){
 		if(div)
 			xhat[i] = x[i]/y;
 		else
 			xhat[i] = x[i]*y;
-    }
+	}
 }
 
 void vec_vec_add(double *xhat, double *x, double *y, int n, int sub){
@@ -108,6 +112,33 @@ void vec_vec_add(double *xhat, double *x, double *y, int n, int sub){
 		else 
 			xhat[i] = x[i] + y[i];
 	}
+}
+
+void mat_mul(DenseMatrix *AB, DenseMatrix *A, DenseMatrix *B){
+	int i,j,k;
+	if(A->J != B->I)
+		return;
+	for(j=0;j<AB->J;j++)
+		for(i=0;i<AB->I;i++)
+			for(k=0;k<A->J;k++)
+				AB->col_ptr[j][i] += A->col_ptr[k][i]*B->col_ptr[j][k];
+
+}
+
+void mat_mat_add(DenseMatrix *A_B, DenseMatrix *A, DenseMatrix* B, int sub){
+    int j;
+    if(A->J != B->J || A->I != B->I)
+        return;
+    for(j=0;j<A_B->J;j++)
+        vec_vec_add(A_B->col_ptr[j], A->col_ptr[j], B->col_ptr[j], A_B->I, sub);
+}
+
+void transpose(DenseMatrix *A, DenseMatrix *At){
+	int i,j;
+	
+	for(j=0;j<At->J;j++)
+		for(i=0;i<At->I;i++)
+			At->col_ptr[j][i] = A->col_ptr[i][j];
 }
 
 double norm_2(double *x, int n){
@@ -136,35 +167,4 @@ double fwd_err(DenseMatrix *A){
 		for(i=0;i<A->I;i++)
 			fwd_err = A->col_ptr[j][i] > fwd_err ? A->col_ptr[j][i] : fwd_err;
 	return fwd_err;
-}
-
-DenseMatrix *mat_mul(DenseMatrix *A, DenseMatrix *B){
-	int i,j,k;
-	DenseMatrix *AB;
-	if(A->J != B->I)
-		return NULL;
-
-	AB = gen_mat(A->I,B->J,0);
-
-	for(j=0;j<AB->J;j++)
-		for(i=0;i<AB->I;i++)
-			for(k=0;k<A->J;k++)
-				AB->col_ptr[j][i] += A->col_ptr[k][i]*B->col_ptr[j][k];
-
-	return AB;
-}
-
-
-DenseMatrix *mat_mat_add(DenseMatrix *A, DenseMatrix *B, int sub){
-    int j;
-    DenseMatrix *A_B;
-    if(A->J != B->J || A->I != B->I)
-        return NULL;
-
-    A_B = gen_mat(A->I, A->J, 0);
-
-    for(j=0;j<A_B->J;j++)
-        vec_vec_add(A_B->col_ptr[j], A->col_ptr[j], B->col_ptr[j], A_B->J, sub);
-        
-    return A_B; 
 }

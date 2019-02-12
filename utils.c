@@ -2,19 +2,18 @@
 #include <stdlib.h>
 #include "utils.h"
 
-DenseMatrix* gen_mat(int I, int J, int rand){
-	DenseMatrix *A;
+DenseMatrix gen_mat(int I, int J, int rand){
+	DenseMatrix A;
 	
-	A = (DenseMatrix*)malloc(sizeof(DenseMatrix));
-	A->I = I;
-	A->J = J;
+	A.I = I;
+	A.J = J;
 	
-	A->vals = (double*)calloc(A->I*A->J,sizeof(double));
-	A->col_ptr = (double**)malloc(A->J*sizeof(double*));
+	A.vals = (double*)calloc(A.I*A.J,sizeof(double));
+	A.col_ptr = (double**)malloc(A.J*sizeof(double*));
 	
-	init_mat(A);
+	init_mat(&A);
 	if(rand)
-		assign_rand(A);
+		assign_rand(&A);
 
 	return A;
 }
@@ -22,8 +21,7 @@ DenseMatrix* gen_mat(int I, int J, int rand){
 void assign_rand(DenseMatrix *A){
 	int i;
 	for(i=0;i<A->I*A->J;i++)
-		A->vals[i] = (double)i;
-		//A->vals[i] = drand()%5;
+		A->vals[i] = drand48();
 }
 
 void init_mat(DenseMatrix *A){
@@ -35,14 +33,14 @@ void init_mat(DenseMatrix *A){
 void free_mat(DenseMatrix *A){
 	free(A->vals);
 	free(A->col_ptr);
-	free(A);
+	//free(A);
 }
 
 void print_mat(DenseMatrix *A){
 	int i,j;
 	for(i=0;i<A->I;i++){
 		for(j=0;j<A->J;j++){
-			printf("%lf ",A->col_ptr[j][i]);
+			printf("%0.6lf  ",A->col_ptr[j][i]);
 		}
 		printf("\n");
 	}

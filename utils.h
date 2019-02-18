@@ -10,7 +10,7 @@ typedef struct
 }
 DenseMatrix;
 
-DenseMatrix* gen_mat(int I, int J, int rand);
+DenseMatrix gen_mat(int I, int J, int rand);
 void assign_rand(DenseMatrix *A);
 void init_mat(DenseMatrix *A);
 void free_mat(DenseMatrix *A);
